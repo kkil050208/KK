@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我们的纪念日</title>
+<style>
+  /* ========== Reset & Base ========== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 30%, #f48fb1 60%, #fce4ec 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: #5d4037;
+    overflow-x: hidden;
+  }
+
+  /* ========== Petal Canvas ========== */
+  #petalCanvas {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ========== Container ========== */
+  .container {
+    position: relative; z-index: 1;
+    max-width: 900px; margin: 0 auto; padding: 20px;
+  }
+
+  /* ========== Hero Section ========== */
+  .hero {
+    text-align: center; padding: 60px 20px 40px;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 300;
+    color: #880e4f;
+    margin-bottom: 8px;
+    letter-spacing: 4px;
+  }
+  .hero .heart-icon {
+    font-size: 2rem;
+    animation: heartbeat 1.2s ease-in-out infinite;
+    display: inline-block;
+  }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    15% { transform: scale(1.25); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.18); }
+    60% { transform: scale(1); }
+  }
+  .hero .subtitle {
+    font-size: 1.1rem; color: #ad1457;
+    margin-top: 4px; letter-spacing: 2px;
+  }
+
+  /* ========== Timer Section ========== */
+  .timer-section {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 36px 24px;
+    text-align: center;
+    margin: 20px 0 32px;
+    box-shadow: 0 8px 32px rgba(136, 14, 79, 0.12);
+  }
+  .timer-section .label {
+    font-size: 1.1rem; color: #ad1457;
+    margin-bottom: 16px; letter-spacing: 2px;
+  }
+  .timer-grid {
+    display: flex; justify-content: center; gap: clamp(12px, 3vw, 28px);
+    flex-wrap: wrap;
+  }
+  .timer-item {
+    text-align: center; min-width: 64px;
+  }
+  .timer-item .number {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700;
+    color: #880e4f;
+    display: block;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+  .timer-item .unit {
+    font-size: 0.85rem; color: #ad1457;
+    margin-top: 2px; letter-spacing: 1px;
+  }
+  .timer-sep {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    color: #f06292; font-weight: 300;
+    align-self: center; padding-bottom: 16px;
+  }
+
+  /* ========== Countdown Section ========== */
+  .countdown-section {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 32px 24px;
+    text-align: center;
+    margin: 0 0 32px;
+    box-shadow: 0 8px 32px rgba(136, 14, 79, 0.12);
+    border: 2px solid rgba(240, 98, 146, 0.25);
+  }
+  .countdown-section h2 {
+    font-size: 1.4rem; color: #880e4f;
+    font-weight: 400; margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .countdown-section .anniversary-label {
+    font-size: 0.95rem; color: #ad1457;
+    margin-bottom: 16px;
+  }
+  .countdown-timer {
+    display: flex; justify-content: center; gap: clamp(10px, 2.5vw, 24px);
+    flex-wrap: wrap;
+  }
+  .cd-item .cd-number {
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    font-weight: 700; color: #c62828;
+  }
+  .cd-item .cd-unit {
+    font-size: 0.8rem; color: #ad1457;
+  }
+  .anniversary-today {
+    font-size: 1.6rem; color: #c62828; font-weight: 700;
+    animation: heartbeat 1.2s ease-in-out infinite;
+  }
+
+  /* ========== Memories Section ========== */
+  .memories-section {
+    margin-bottom: 40px;
+  }
+  .memories-section h2 {
+    text-align: center;
+    font-size: 1.4rem; color: #880e4f;
+    font-weight: 400; margin-bottom: 24px;
+    letter-spacing: 2px;
+  }
+  .memories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  .memory-card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(136, 14, 79, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .memory-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(136, 14, 79, 0.2);
+  }
+
+  /* 照片容器 */
+  .card-img-wrapper {
+    width: 100%; height: 200px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #f8bbd0, #f48fb1);
+    cursor: pointer;
+  }
+  .card-img-wrapper img.card-img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+  }
+  .card-img-wrapper .card-img.placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; color: white;
+  }
+
+  /* 上传悬浮层 */
+  .upload-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .card-img-wrapper:hover .upload-overlay {
+    opacity: 1;
+  }
+  .upload-overlay .btn-icon {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    border: none; cursor: pointer;
+    font-size: 1.2rem; color: #880e4f;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s ease, background 0.2s ease;
+    line-height: 1;
+  }
+  .upload-overlay .btn-icon:hover {
+    transform: scale(1.15);
+    background: #fff;
+  }
+  .upload-overlay .btn-delete {
+    color: #c62828;
+  }
+
+  /* 提示文字 */
+  .upload-hint {
+    text-align: center; font-size: 0.8rem; color: #ad1457;
+    margin-top: 8px; opacity: 0.7;
+  }
+
+  /* ========== Footer ========== */
+  .footer {
+    text-align: center; padding: 20px;
+    font-size: 0.85rem; color: #ad1457; opacity: 0.7;
+  }
+  .footer .heart { color: #e91e63; }
+
+  /* ========== Responsive ========== */
+  @media (max-width: 600px) {
+    .hero { padding: 40px 16px 20px; }
+    .timer-section, .countdown-section { padding: 24px 16px; }
+    .memories-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="petalCanvas"></canvas>
+
+<div class="container">
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1 id="heroNames">小明 & 小红</h1>
+    <span class="heart-icon">&#x2764;&#xFE0F;</span>
+    <p class="subtitle">&#x1F954; Forever &amp; Always &#x1F955;</p>
+  </section>
+
+  <!-- Timer -->
+  <section class="timer-section">
+    <p class="label">&#x1F495; 我们已经在一起</p>
+    <div class="timer-grid" id="timerGrid">
+      <div class="timer-item"><span class="number" id="tYears">0</span><span class="unit">年</span></div>
+      <span class="timer-sep">:</span>
+      <div class="timer-item"><span class="number" id="tMonths">0</span><span class="unit">月</span></div>
+      <span class="timer-sep">:</span>
+      <div class="timer-item"><span class="number" id="tDays">0</span><span class="unit">天</span></div>
+      <span class="timer-sep">:</span>
+      <div class="timer-item"><span class="number" id="tHours">0</span><span class="unit">时</span></div>
+      <span class="timer-sep">:</span>
+      <div class="timer-item"><span class="number" id="tMins">0</span><span class="unit">分</span></div>
+      <span class="timer-sep">:</span>
+      <div class="timer-item"><span class="number" id="tSecs">0</span><span class="unit">秒</span></div>
+    </div>
+  </section>
+
+  <!-- Countdown -->
+  <section class="countdown-section">
+    <h2>&#x1F389; 下一个纪念日</h2>
+    <p class="anniversary-label" id="anniversaryLabel"></p>
+    <div id="countdownDisplay">
+      <div class="countdown-timer">
+        <div class="timer-item cd-item"><span class="cd-number" id="cdDays">0</span><span class="cd-unit">天</span></div>
+        <div class="timer-item cd-item"><span class="cd-number" id="cdHours">0</span><span class="cd-unit">时</span></div>
+        <div class="timer-item cd-item"><span class="cd-number" id="cdMins">0</span><span class="cd-unit">分</span></div>
+        <div class="timer-item cd-item"><span class="cd-number" id="cdSecs">0</span><span class="cd-unit">秒</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Memories -->
+  <section class="memories-section">
+    <h2>&#x1F4F8; 我们的回忆 &#x1F954; &#x1F955;</h2>
+    <p class="upload-hint">&#x1F4A1; 鼠标移到卡片上，点击 &#x1F4F7; 上传 &#x1F954;&#x1F955; 的照片，点击 &#x2715; 删除</p>
+    <div class="memories-grid" id="memoriesGrid"></div>
+  </section>
+
+  <!-- Footer -->
+  <p class="footer">Made with <span class="heart">&#x2764;</span> &#x1F954; &#x1F955; for you</p>
+
+</div>
+
+<script>
+// ==================== 配置区（改成你自己的内容） ====================
+const CONFIG = {
+  startDate: '2025-05-20',          // 在一起的第一天 (YYYY-MM-DD)
+  partner1: '&#x1F466; 啵啵裕',     // 你的名字（支持 emoji）
+  partner2: '&#x1F467; 啵啵鲜',     // TA 的名字（支持 emoji）
+  memories: [
+    { date: '2025-05-20', photo: '', quote: '那天，我们的故事开始了' },
+    { date: '2025-06-01', photo: '', quote: '第一次一起过儿童节，两个大小孩' },
+    { date: '2025-07-15', photo: '', quote: '夏天的晚风和你，都很温柔' },
+    { date: '2025-08-29', photo: '', quote: '七夕，牛郎织女都没我们甜' },
+    { date: '2025-10-01', photo: '', quote: '国庆假期，一起看遍人山人海' },
+    { date: '2025-12-25', photo: '', quote: '圣诞树下，你是我最好的礼物' },
+  ]
+};
+
+// ==================== 照片存储（服务器 API） ====================
+let savedPhotos = {};
+
+async function loadPhotosFromServer() {
+  try {
+    const res = await fetch('/api/photos');
+    if (res.ok) savedPhotos = await res.json();
+  } catch (e) {
+    console.log('加载照片失败，使用空数据');
+  }
+}
+
+async function uploadPhoto(index, file) {
+  const form = new FormData();
+  form.append('photo', file);
+  form.append('index', index);
+  const res = await fetch('/api/photos', { method: 'POST', body: form });
+  if (!res.ok) throw new Error('上传失败');
+  const data = await res.json();
+  savedPhotos[data.index] = data.url;
+  return data.url;
+}
+
+async function deletePhoto(index) {
+  await fetch('/api/photos/' + index, { method: 'DELETE' });
+  delete savedPhotos[index];
+}
+
+// ==================== 初始化页面内容 ====================
+function initContent() {
+  document.getElementById('heroNames').innerHTML =
+    `${CONFIG.partner1} <span style="font-weight:300;color:#f06292;margin:0 8px;">&amp;</span> ${CONFIG.partner2}`;
+}
+
+// ==================== 恋爱计时器 ====================
+function updateTimer() {
+  const start = new Date(CONFIG.startDate + 'T00:00:00');
+  const now = new Date();
+  if (now < start) { return; }
+
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  let days = now.getDate() - start.getDate();
+  let hours = now.getHours() - start.getHours();
+  let minutes = now.getMinutes() - start.getMinutes();
+  let seconds = now.getSeconds() - start.getSeconds();
+
+  if (seconds < 0) { seconds += 60; minutes--; }
+  if (minutes < 0) { minutes += 60; hours--; }
+  if (hours < 0) { hours += 24; days--; }
+  if (days < 0) {
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate(); months--;
+  }
+  if (months < 0) { months += 12; years--; }
+
+  document.getElementById('tYears').textContent = years;
+  document.getElementById('tMonths').textContent = months;
+  document.getElementById('tDays').textContent = days;
+  document.getElementById('tHours').textContent = String(hours).padStart(2, '0');
+  document.getElementById('tMins').textContent = String(minutes).padStart(2, '0');
+  document.getElementById('tSecs').textContent = String(seconds).padStart(2, '0');
+}
+
+// ==================== 纪念日倒数 ====================
+function updateCountdown() {
+  const start = new Date(CONFIG.startDate + 'T00:00:00');
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  let year = now.getFullYear();
+  let anniversary = new Date(year, start.getMonth(), start.getDate());
+  if (anniversary <= today) {
+    year++;
+    anniversary = new Date(year, start.getMonth(), start.getDate());
+  }
+
+  const yearNum = year - start.getFullYear();
+  document.getElementById('anniversaryLabel').textContent =
+    `距离 ${yearNum} 周年纪念日 (${anniversary.getFullYear()}年${String(anniversary.getMonth()+1).padStart(2,'0')}月${String(anniversary.getDate()).padStart(2,'0')}日)`;
+
+  const diff = anniversary - now;
+  if (diff <= 0) {
+    document.getElementById('countdownDisplay').innerHTML =
+      `<div class="anniversary-today">&#x1F389; 今天是我们 ${yearNum} 周年纪念日！&#x1F389;</div>`;
+    return;
+  }
+
+  const totalSecs = Math.floor(diff / 1000);
+  const d = Math.floor(totalSecs / 86400);
+  const h = Math.floor((totalSecs % 86400) / 3600);
+  const m = Math.floor((totalSecs % 3600) / 60);
+  const s = totalSecs % 60;
+
+  document.getElementById('cdDays').textContent = d;
+  document.getElementById('cdHours').textContent = String(h).padStart(2, '0');
+  document.getElementById('cdMins').textContent = String(m).padStart(2, '0');
+  document.getElementById('cdSecs').textContent = String(s).padStart(2, '0');
+}
+
+// ==================== 回忆墙（含照片上传功能） ====================
+const emojis = ['&#x1F954;','&#x1F955;','&#x1F338;','&#x1F49D;','&#x1F955;','&#x1F954;','&#x1F33A;','&#x2728;'];
+
+function handleFilePick(index, wrapperEl) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+
+  input.addEventListener('change', async function() {
+    const file = this.files && this.files[0];
+    if (!file) return;
+
+    wrapperEl.innerHTML = '<div class="card-img placeholder" style="font-size:1rem;">上传中...</div>';
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('照片不能超过 10MB');
+      updateCardImage(wrapperEl, index);
+      return;
+    }
+
+    try {
+      // 压缩图片
+      const dataUrl = await compressImage(file);
+      // dataUrl 转 Blob
+      const blob = dataURLtoBlob(dataUrl);
+      await uploadPhoto(index, blob);
+    } catch (err) {
+      alert('上传失败: ' + (err.message || '网络错误'));
+    }
+    updateCardImage(wrapperEl, index);
+  });
+
+  input.click();
+}
+
+function compressImage(file) {
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const maxW = 800;
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        let quality = 0.8;
+        let dataUrl;
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+          if (dataUrl.length < 600 * 1024) break;
+          quality -= 0.2;
+        }
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function dataURLtoBlob(dataurl) {
+  const parts = dataurl.split(',');
+  const mime = parts[0].match(/:(.*?);/)[1];
+  const bytes = atob(parts[1]);
+  const buf = new ArrayBuffer(bytes.length);
+  const arr = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([buf], { type: mime });
+}
+
+function updateCardImage(wrapperEl, index) {
+  const photoData = savedPhotos[index] || CONFIG.memories[index].photo;
+  const hasPhoto = !!photoData;
+
+  // 清空 wrapper 内容并重新构建
+  wrapperEl.innerHTML = '';
+  wrapperEl.style.background = hasPhoto ? 'transparent' : '';
+
+  if (hasPhoto) {
+    const img = document.createElement('img');
+    img.className = 'card-img';
+    img.src = photoData;
+    img.alt = '';
+    wrapperEl.appendChild(img);
+  } else {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'card-img placeholder';
+    placeholder.innerHTML = emojis[index % emojis.length];
+    wrapperEl.appendChild(placeholder);
+  }
+
+  // 悬浮上传层
+  const overlay = document.createElement('div');
+  overlay.className = 'upload-overlay';
+
+  const uploadBtn = document.createElement('button');
+  uploadBtn.className = 'btn-icon';
+  uploadBtn.title = hasPhoto ? '更换照片' : '上传照片';
+  uploadBtn.innerHTML = '&#x1F4F7;';
+  uploadBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    handleFilePick(index, wrapperEl);
+  });
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'btn-icon btn-delete';
+  deleteBtn.title = '删除照片';
+  deleteBtn.innerHTML = '&#x2715;';
+  deleteBtn.style.display = hasPhoto ? 'flex' : 'none';
+  deleteBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    deletePhoto(index);
+    updateCardImage(wrapperEl, index);
+  });
+
+  overlay.appendChild(uploadBtn);
+  overlay.appendChild(deleteBtn);
+  wrapperEl.appendChild(overlay);
+}
+
+function renderMemories() {
+  const grid = document.getElementById('memoriesGrid');
+
+  grid.innerHTML = '';
+
+  CONFIG.memories.forEach((m, i) => {
+    const photoData = savedPhotos[i] || m.photo;
+    const hasPhoto = !!photoData;
+
+    const card = document.createElement('div');
+    card.className = 'memory-card';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'card-img-wrapper';
+    wrapper.addEventListener('click', function() {
+      handleFilePick(i, wrapper);
+    });
+
+    if (hasPhoto) {
+      wrapper.style.background = 'transparent';
+      const img = document.createElement('img');
+      img.className = 'card-img';
+      img.src = photoData;
+      img.alt = '';
+      img.loading = 'lazy';
+      wrapper.appendChild(img);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'card-img placeholder';
+      placeholder.innerHTML = emojis[i % emojis.length];
+      wrapper.appendChild(placeholder);
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'upload-overlay';
+
+    const uploadBtn = document.createElement('button');
+    uploadBtn.className = 'btn-icon';
+    uploadBtn.title = hasPhoto ? '更换照片' : '上传照片';
+    uploadBtn.innerHTML = '&#x1F4F7;';
+    uploadBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      handleFilePick(i, wrapper);
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-icon btn-delete';
+    deleteBtn.title = '删除照片';
+    deleteBtn.innerHTML = '&#x2715;';
+    deleteBtn.style.display = hasPhoto ? 'flex' : 'none';
+    deleteBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      deletePhoto(i);
+      updateCardImage(wrapper, i);
+    });
+
+    overlay.appendChild(uploadBtn);
+    overlay.appendChild(deleteBtn);
+    wrapper.appendChild(overlay);
+
+    card.appendChild(wrapper);
+
+    const body = document.createElement('div');
+    body.className = 'card-body';
+    body.innerHTML = `
+      <div class="card-date">${m.date}</div>
+      <div class="card-quote">${m.quote}</div>
+    `;
+    card.appendChild(body);
+
+    grid.appendChild(card);
+  });
+}
+
+// ==================== 花瓣飘落 ====================
+function initPetals() {
+  const canvas = document.getElementById('petalCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const items = [];
+  const MAX_PETALS = 28;
+  const MAX_VEGGIES = 10;
+
+  function createPetal() {
+    return {
+      type: 'petal',
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * canvas.height,
+      size: 10 + Math.random() * 14,
+      speedY: 0.5 + Math.random() * 1.5,
+      speedX: -0.4 + Math.random() * 0.8,
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.03,
+      opacity: 0.4 + Math.random() * 0.4,
+      color: Math.random() < 0.5 ? '#f48fb1' : '#f8bbd0',
+    };
+  }
+
+  function createVeggie() {
+    const vegEmojis = ['\u{1F954}', '\u{1F955}'];
+    return {
+      type: 'veggie',
+      emoji: vegEmojis[Math.floor(Math.random() * vegEmojis.length)],
+      x: Math.random() * canvas.width,
+      y: -40 - Math.random() * canvas.height * 0.5,
+      size: 18 + Math.random() * 16,
+      speedY: 0.35 + Math.random() * 0.9,
+      speedX: -0.3 + Math.random() * 0.6,
+      opacity: 0.3 + Math.random() * 0.35,
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.015 + Math.random() * 0.025,
+    };
+  }
+
+  for (let i = 0; i < MAX_PETALS; i++) items.push(createPetal());
+  for (let i = 0; i < MAX_VEGGIES; i++) items.push(createVeggie());
+
+  function drawItem(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.globalAlpha = p.opacity;
+    if (p.type === 'petal') {
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.size * 0.5, p.size * 0.22, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.rotate(Math.sin(p.wobble) * 0.35);
+      ctx.font = p.size + 'px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.emoji, 0, 0);
+    }
+    ctx.restore();
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < items.length; i++) {
+      const p = items[i];
+      p.y += p.speedY;
+      p.x += p.speedX;
+      if (p.type === 'petal') {
+        p.rotation += p.rotSpeed;
+      } else {
+        p.wobble += p.wobbleSpeed;
+      }
+      drawItem(p);
+      if (p.y > canvas.height + 50) {
+        items[i] = p.type === 'petal' ? createPetal() : createVeggie();
+        items[i].y = -50;
+      }
+      if (p.x < -40) p.x = canvas.width + 40;
+      if (p.x > canvas.width + 40) p.x = -40;
+    }
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+
+// ==================== 启动 ====================
+async function init() {
+  await loadPhotosFromServer();
+  initContent();
+  renderMemories();
+  initPetals();
+  updateTimer();
+  updateCountdown();
+  setInterval(updateTimer, 1000);
+  setInterval(updateCountdown, 1000);
+}
+init();
+</script>
+
+</body>
+</html>
